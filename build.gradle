@@ -1,0 +1,82 @@
+
+apply plugin: 'java'
+apply plugin: 'scala'
+apply plugin: 'maven'
+
+group            = 'com.manofj.commons.scala'
+archivesBaseName = 'commons-scala_2.11'
+version          = '1.0'
+
+tasks.withType( AbstractCompile )*.options*.encoding = 'UTF-8'
+
+configurations {
+  deployerJars
+}
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile group: 'com.typesafe',           name: 'config',                            version: '1.2.1'
+  compile group: 'com.typesafe.akka',      name: 'akka-actor_2.11',                   version: '2.3.3'
+  compile group: 'org.scala-lang',         name: 'scala-actors-migration_2.11',       version: '1.1.0'
+  compile group: 'org.scala-lang',         name: 'scala-compiler',                    version: '2.11.1'
+  compile group: 'org.scala-lang',         name: 'scala-library',                     version: '2.11.1'
+  compile group: 'org.scala-lang',         name: 'scala-reflect',                     version: '2.11.1'
+  compile group: 'org.scala-lang.modules', name: 'scala-parser-combinators_2.11',     version: '1.0.1'
+  compile group: 'org.scala-lang.modules', name: 'scala-swing_2.11',                  version: '1.0.1'
+  compile group: 'org.scala-lang.modules', name: 'scala-xml_2.11',                    version: '1.0.2'
+  compile group: 'org.scala-lang.plugins', name: 'scala-continuations-library_2.11',  version: '1.0.2'
+  compile group: 'org.scala-lang.plugins', name: 'scala-continuations-plugin_2.11.1', version: '1.0.2'
+
+  deployerJars 'org.apache.maven.wagon:wagon-ssh:2.2'
+}
+
+task sources( type: Copy, dependsOn: classes ) {
+  from sourceSets.main.allSource
+  into 'build/sources'
+}
+
+task sourcesJar( type: Jar, dependsOn: "sources" ) {
+  classifier = 'sources'
+  from 'build/sources'
+}
+
+artifacts {
+  archives sourcesJar
+}
+
+uploadArchives {
+  repositories {
+    mavenDeployer {
+      dependsOn build
+
+      configuration = configurations.deployerJars
+
+      repository( url: mavenRepositoryUrl ) {
+        authentication( userName: mavenUserName, privateKey: mavenPrivateKey, passphrase: mavenPassphrase )
+      }
+
+      pom {
+        groupId    = project.group
+        artifactId = project.archivesBaseName
+        version    = project.version
+
+        project {
+          url           'https://github.com/ManOfJ/Commons-Scala'
+          inceptionYear '2016'
+
+          licenses {
+            license {
+              name         'MIT License'
+              url          'https://opensource.org/licenses/mit-license.php'
+              distribution 'repo'
+            }
+          }
+
+        }
+      }
+    }
+  }
+}
